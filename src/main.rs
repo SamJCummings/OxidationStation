@@ -15,34 +15,6 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn load_files(folder: Option<String>) -> Result<Vec<String>, io::Error> {
-    let mut path = env::home_dir().unwrap();
-    path.push(MUSIC_FOLDER.to_string());
-    path.push(folder.unwrap_or(String::new()));
-
-    let visible = |p: &Path| {
-        p.file_name()
-            .and_then(|n| n.to_str())
-            .map(|name| !name.starts_with('.'))
-            .unwrap()
-    };
-
-    let entries = fs::read_dir(path)?
-        .filter_map(|res| res.ok())
-        .map(|e| e.path())
-        .filter(|p| visible(p))
-        .collect::<Vec<PathBuf>>();
-
-    let mut list = entries
-        .iter()
-        .filter_map(|path| path.file_name()?.to_str())
-        .map(|s| s.to_string())
-        .collect::<Vec<String>>();
-
-    list.sort();
-    Ok(list)
-}
-
 fn create_app() -> Result<CursiveRunnable, io::Error> {
     let mut siv = cursive::default();
     siv.add_global_callback('q', |s| s.quit());
@@ -155,4 +127,32 @@ fn clear_list(siv: &mut Cursive) {
         }
         _ => {}
     }
+}
+
+fn load_files(folder: Option<String>) -> Result<Vec<String>, io::Error> {
+    let mut path = env::home_dir().unwrap();
+    path.push(MUSIC_FOLDER.to_string());
+    path.push(folder.unwrap_or(String::new()));
+
+    let visible = |p: &Path| {
+        p.file_name()
+            .and_then(|n| n.to_str())
+            .map(|name| !name.starts_with('.'))
+            .unwrap()
+    };
+
+    let entries = fs::read_dir(path)?
+        .filter_map(|res| res.ok())
+        .map(|e| e.path())
+        .filter(|p| visible(p))
+        .collect::<Vec<PathBuf>>();
+
+    let mut list = entries
+        .iter()
+        .filter_map(|path| path.file_name()?.to_str())
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+
+    list.sort();
+    Ok(list)
 }
