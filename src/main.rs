@@ -1,13 +1,20 @@
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use std::{env, fs, io, thread};
 
 use cursive::traits::*;
 use cursive::views::{Dialog, LinearLayout, OnEventView, ResizedView, ScrollView, SelectView};
 use cursive::{Cursive, CursiveRunnable};
 
-use rodio::OutputStreamBuilder;
+use rodio::{OutputStreamBuilder, Sink};
 
 const MUSIC_FOLDER: &str = "music";
+
+#[allow(dead_code)]
+struct AudioData {
+    stream: rodio::OutputStream,
+    sink: Arc<Mutex<Sink>>,
+}
 
 fn main() -> io::Result<()> {
     let mut app = create_app()?;
@@ -18,6 +25,12 @@ fn main() -> io::Result<()> {
 fn create_app() -> Result<CursiveRunnable, io::Error> {
     let mut siv = cursive::default();
     siv.add_global_callback('q', |s| s.quit());
+
+    siv.add_global_callback('p', |s| {
+        s.with_user_data(|audio: &mut AudioData| {
+            audio.sink.lock().unwrap().pause();
+        });
+    });
     siv.set_theme(cursive::theme::Theme::terminal_default());
 
     let layout = LinearLayout::horizontal()
@@ -98,13 +111,23 @@ fn select_item(siv: &mut Cursive, choice: &String) {
             path.push(MUSIC_FOLDER.to_string());
             path.push(&track);
 
+            let stream = OutputStreamBuilder::open_default_stream().unwrap();
+            let sink = Arc::new(Mutex::new(Sink::connect_new(stream.mixer())));
+
+            siv.set_user_data(AudioData {
+                stream: stream,
+                sink: sink.clone(),
+            });
+
+            let sink_clone = sink.clone();
+
             thread::spawn(move || {
-                let sh = OutputStreamBuilder::open_default_stream().unwrap();
-                let sink = rodio::Sink::connect_new(sh.mixer());
                 let file = std::fs::File::open(path).unwrap();
 
-                sink.append(rodio::Decoder::try_from(file).unwrap());
-                sink.sleep_until_end();
+                sink_clone
+                    .lock()
+                    .unwrap()
+                    .append(rodio::Decoder::try_from(file).unwrap());
             });
         }
         _ => {}
