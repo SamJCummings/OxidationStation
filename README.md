@@ -1,6 +1,21 @@
-# Music Player (Name Pending)
+# Oxidation Station
 
-Currently a work in progress (WIP) application to play music from mp3s. Written in Rust, 
-using Cursive to create a Text User Interface (TUI), this application aims to act as a **very**
-simple mp3 player working with simple file structures. It is an application I am aiming to make
-for personal use, and to learn both rust and TUI programming.
+A **Rust-based TUI MP3 player** – your terminal jukebox!
+
+## Features
+
+- Browse and play MP3 files
+- Play and pause tracks
+- Show current track info
+- Follows a simple folder structure
+- Lightweight and terminal-based
+
+## Crates
+
+- `cursive` – Terminal UI
+- `rodio` – Audio playback
+
+## License
+
+MIT License © 2025 Sam Cummings
+
